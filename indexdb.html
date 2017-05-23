@@ -34,7 +34,21 @@
         <input id="upper-name" type="text" placeholder="name" />
     </div>
     <div class="form-control">
+        <button id="button6">Set Age</button>
+        <input id="age" type="number" placeholder="age" />
+    </div>
+    <div class="form-control">
         <button id="button3">get all by name</button>
+    </div>
+    <div class="form-control">
+        <label>
+            prev
+            <input type="radio" name="direction" value="prev" checked />
+        </label>
+        <label>
+            next
+            <input type="radio" name="direction" value="next" />
+        </label>
     </div>
     <div class="form-control">
         <button id="reset">reset</button>
@@ -46,7 +60,7 @@
     // var indexedDB = window.indexedDB || window.mozIndexedDB || // window.webkitIndexedDB || window.msIndexedDB;
     var request = indexedDB.open("database", 2);
     var db;
-
+    var lastPeopleRequested;
     request.onsuccess = function(e) {
         console.log('Base de datos cargada correctamente');
         db = request.result;
@@ -97,6 +111,7 @@
 
     function reset() {
         document.getElementById('result').innerHTML = '';
+        lastPeopleRequested = undefined;
     }
 
     function showResult(text) {
@@ -109,11 +124,16 @@
         document.getElementById('result').innerHTML += text;
     }
 
+    function getDirection() {
+        return document.querySelector('input[name="direction"]:checked').value;
+    }
+
     document.getElementById('reset').addEventListener('click', function() {
         reset();
     });
 
     document.getElementById('button1').addEventListener('click', function() {
+        reset();
         var id = +document.getElementById('id').value || 1;
         var transaction = db.transaction('people');
         var objectStore = transaction.objectStore("people");
@@ -125,17 +145,20 @@
         request.onsuccess = function(event) {
             // Do something with the request.result!
             var text = "Name for id " + id + " is " + (request.result ? request.result.name : 'dunno');
+            lastPeopleRequested = request.result;
             showResult(text);
         };
     });
 
     document.getElementById('button2').addEventListener('click', function() {
+        reset();
         var name = document.getElementById('name').value || 'Ervin Howell';
         var transaction = db.transaction('people');
         var objectStore = transaction.objectStore("people");
         var index = objectStore.index("by_name");
         index.get(name).onsuccess = function(event) {
             var text = "Donna's email is " + event.target.result.email + ' and id ' + event.target.result.id;
+            lastPeopleRequested = event.target.result;
             showResult(text);
         };
     });
@@ -145,7 +168,7 @@
         var transaction = db.transaction('people');
         var objectStore = transaction.objectStore("people");
         var index = objectStore.index("by_name");
-        index.openCursor().onsuccess = function(event) {
+        index.openCursor(null, getDirection()).onsuccess = function(event) {
             var cursor = event.target.result;
             if (cursor) {
                 var text = "<br>Name: " + cursor.key +
@@ -166,7 +189,7 @@
         // Match anything past "Bill", including "Bill"
         var lowerBoundKeyRange = IDBKeyRange.lowerBound(name);
 
-        index.openCursor(lowerBoundKeyRange).onsuccess = function(event) {
+        index.openCursor(lowerBoundKeyRange, getDirection()).onsuccess = function(event) {
             var cursor = event.target.result;
             if (cursor) {
                 var text = "<br>Name: " + cursor.key +
@@ -187,7 +210,7 @@
         // Match anything up to
         var upperBoundOpenKeyRange = IDBKeyRange.upperBound(name);
 
-        index.openCursor(upperBoundOpenKeyRange).onsuccess = function(event) {
+        index.openCursor(upperBoundOpenKeyRange, getDirection()).onsuccess = function(event) {
             var cursor = event.target.result;
             if (cursor) {
                 var text = "<br>Name: " + cursor.key +
@@ -195,6 +218,25 @@
                 appendResult(text);
                 cursor.continue();
             }
+        };
+    });
+
+    document.getElementById('button6').addEventListener('click', function() {
+        if (!lastPeopleRequested) {
+            showResult('Missin last requested');
+            return;
+        }
+        var age = +document.getElementById('age').value || 42;
+        var objectStore = db.transaction(["people"], "readwrite").objectStore("people");
+        // Get the old value that we want to update
+        lastPeopleRequested.age = age;
+        // Put this updated object back into the database.
+        var requestUpdate = objectStore.put(lastPeopleRequested);
+        requestUpdate.onerror = function(event) {
+            // Do something with the error
+        };
+        requestUpdate.onsuccess = function(event) {
+            // Success - the data is updated!
         };
     });
     </script>
