@@ -191,7 +191,7 @@
         var index = objectStore.index("by_name");
 
         // Match anything past "Bill", including "Bill"
-        var lowerBoundKeyRange = IDBKeyRange.lowerBound(name);
+        var lowerBoundKeyRange = IDBKeyRange.rangeBound(name);
 
         index.openCursor(lowerBoundKeyRange, getDirection()).onsuccess = function(event) {
             var cursor = event.target.result;
