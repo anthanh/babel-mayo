@@ -38,6 +38,10 @@
         <input id="age" type="number" placeholder="age" />
     </div>
     <div class="form-control">
+        <button id="button7">Delete by id</button>
+        <input id="delete-id" type="number" placeholder="id to delete" />
+    </div>
+    <div class="form-control">
         <button id="button3">get all by name</button>
     </div>
     <div class="form-control">
@@ -223,7 +227,7 @@
 
     document.getElementById('button6').addEventListener('click', function() {
         if (!lastPeopleRequested) {
-            showResult('Missin last requested');
+            showResult('Missing last requested');
             return;
         }
         var age = +document.getElementById('age').value || 42;
@@ -234,9 +238,28 @@
         var requestUpdate = objectStore.put(lastPeopleRequested);
         requestUpdate.onerror = function(event) {
             // Do something with the error
+            showResult('Error');
         };
         requestUpdate.onsuccess = function(event) {
             // Success - the data is updated!
+            showResult('Updated!');
+        };
+    });
+
+    document.getElementById('button7').addEventListener('click', function() {
+        var id = +document.getElementById('delete-id').value;
+        if (!id) {
+            showResult('Missing id');
+            return;
+        }
+        var objectStore = db.transaction(["people"], "readwrite").objectStore("people");
+        var request = objectStore.delete(id);
+        request.onsuccess = function(event) {
+            // It's gone!
+            showResult('Deleted!');
+        };
+        request.onerror = function(event) {
+            showResult('Error');
         };
     });
     </script>
