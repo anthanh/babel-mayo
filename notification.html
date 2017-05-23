@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+</head>
+
+<body>
+    <button id="notify">notify me!</button>
+    <script>
+    document.getElementById('notify').addEventListener('click', function() {
+        if (!('Notification' in window)) {
+            alert('Notificaciones no soportadas');
+            return;
+        }
+        Notification.requestPermission(function(permission) {
+            var notification = new Notification(
+                'Hello, hello', {
+                    body: 'Hola!',
+                    icon: 'vertigo.png'
+                }
+            );
+        });
+    });
+    </script>
+</body>
+
+</html>
